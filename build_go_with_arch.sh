@@ -1,7 +1,7 @@
 # shellcheck disable=SC2034
-GOOS=$1
-GOARCH=$2
+export GOOS=$1
+export GOARCH=$2
 
-mkdir out
+mkdir target
 
-go build -o ./out $3
+go build -o ./target/$1_$2_binary $3
