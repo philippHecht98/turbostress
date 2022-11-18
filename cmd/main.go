@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
@@ -107,69 +109,81 @@ type benchInput struct {
 	maximize                   bool
 }
 
-func stress(input benchInput, name string, stressFn func(load int, threads int) (*exec.Cmd, error)) error {
+func (bi *benchInput) toString() string {
+	return fmt.Sprintf("loadStep: %d, initialLoad: %d, method: %s",
+		bi.loadStep, bi.initialLoad, bi.method)
+}
+
+func connectToHost() (net.Conn, error) {
+	conn, err := net.Dial("tcp", "192.168.122.1:4444")
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
+func requestTesting(connection net.Conn, arguments benchInput) error {
+	logrus.Info("Requested to start a Test")
+
+	msg := fmt.Sprintf("startTestReq: Arguments - %s\n", arguments.toString())
+	len, err := connection.Write([]byte(msg))
+
+	// try receive acknowledge package
+	acknowledge := make([]byte, 4)
+	len, err = connection.Read(acknowledge)
+
+	if err != nil || len != 4 || string(acknowledge) != "ack\n" {
+		return errors.New("failed to receive acknowledge")
+	}
+	return nil
+}
+
+func waitForFinishingRecording(connection net.Conn) {
+	logrus.Info("Waiting for finishing the recording")
+
+	finish := make([]byte, 4)
+	len, err := connection.Read(finish)
+
+	if err != nil || len != 4 || string(finish) != "fin\n" {
+		logrus.Error("Failed to receiving finish package")
+	}
+}
+
+func stress(input benchInput, name string, conn net.Conn, stressFn func(load int, threads int) (*exec.Cmd, error)) error {
 	var load = input.initialLoad
+
 	for {
 		logrus.Infof("load_duration_before_measure: %ds, load: %d, threads: %d", int(input.loadDurationBeforeMeasures.Seconds()), load, input.threads)
+		// initialize TCP Connection to Bare-Metal
+		err := requestTesting(conn, input)
+		if err != nil {
+			return err
+		}
+
 		stress, err := stressFn(load, input.threads)
 		if err != nil {
 			return err
 		}
+
 		done := make(chan error)
 		go func() {
+			//defer logrus.Error("stress-ng gone before end of measures, see stress-ng output for details")
 			defer close(done)
 			done <- stress.Wait()
 		}()
 
-		// mesure after this time
-		ticker := time.NewTicker(input.loadDurationBeforeMeasures)
-		defer ticker.Stop()
-		goneErr := fmt.Errorf("stress-ng gone before end of measures, see stress-ng output for details")
-		select {
-		case <-done:
-			return goneErr
-		case <-ticker.C:
-			break
-		}
-
-		sums := make([]float64, len(input.metrics))
-		for i := 0; i < input.repeat; i++ {
-			select {
-			case <-done:
-				return goneErr
-			default:
-				stats, err := turboStat(input.metrics, input.durationBetweenMeasures)
-				if err != nil {
-					return err
-				}
-				for index, value := range stats {
-					sums[index] += value
-				}
-			}
-		}
+		waitForFinishingRecording(conn)
 		stress.Process.Kill()
 		err = <-done
 		if stress.ProcessState.ExitCode() != -1 {
 			return fmt.Errorf("stress-ng was not terminated by a signal, EC: %d, err: %v", stress.ProcessState.ExitCode(), err)
 		}
 
-		mean := make([]float64, len(input.metrics))
-		for index := range sums {
-			mean[index] = sums[index] / float64(input.repeat)
-		}
-		meanStr := make([]string, len(mean))
-		for index, m := range mean {
-			meanStr[index] = strconv.FormatFloat(m, 'f', 2, 64)
-		}
-
-		err = write(append([]string{name, fmt.Sprintf("%d", input.threads), fmt.Sprintf("%d", load)}, meanStr...), os.Stdout)
-		if err != nil {
-			return err
-		}
-
+		// increase load of stress test
 		if load == 100 {
 			return nil
 		}
+
 		load += input.loadStep
 		if load > 100 {
 			load = 100
@@ -177,26 +191,26 @@ func stress(input benchInput, name string, stressFn func(load int, threads int) 
 	}
 }
 
-func cpuStress(input benchInput) error {
-	return stress(input, "CPUStress", func(load int, threads int) (*exec.Cmd, error) {
+func cpuStress(input benchInput, conn net.Conn) error {
+	return stress(input, "CPUStress", conn, func(load int, threads int) (*exec.Cmd, error) {
 		return stressNGCPUStress(load, threads, input.method)
 	})
 }
 
-func vmStress(input benchInput) error {
-	return stress(input, "VMStress", func(_, threads int) (*exec.Cmd, error) {
+func vmStress(input benchInput, conn net.Conn) error {
+	return stress(input, "VMStress", conn, func(_, threads int) (*exec.Cmd, error) {
 		return stressNGVMStress(threads)
 	})
 }
 
-func ipsecStress(input benchInput) error {
-	return stress(input, "ipsec", func(_, threads int) (*exec.Cmd, error) {
+func ipsecStress(input benchInput, conn net.Conn) error {
+	return stress(input, "ipsec", conn, func(_, threads int) (*exec.Cmd, error) {
 		return stressNGIPSec(threads)
 	})
 }
 
-func maximizeStress(input benchInput) error {
-	return stress(input, "maximize", func(_, threads int) (*exec.Cmd, error) {
+func maximizeStress(input benchInput, conn net.Conn) error {
+	return stress(input, "maximize", conn, func(_, threads int) (*exec.Cmd, error) {
 		return stressNGMAximize(threads)
 	})
 }
@@ -208,28 +222,34 @@ func bench(input benchInput, output io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = cpuStress(input)
+
+	conn, err := connectToHost()
+	if err != nil {
+		return err
+	}
+
+	err = cpuStress(input, conn)
 	if err != nil {
 		return err
 	}
 
 	if input.ipsec {
 		input.initialLoad = 100
-		err = ipsecStress(input)
+		err = ipsecStress(input, conn)
 		if err != nil {
 			return err
 		}
 	}
 
 	if input.vm {
-		err = vmStress(input)
+		err = vmStress(input, conn)
 		if err != nil {
 			return err
 		}
 	}
 
 	if input.maximize {
-		err = maximizeStress(input)
+		err = maximizeStress(input, conn)
 		if err != nil {
 			return err
 		}
