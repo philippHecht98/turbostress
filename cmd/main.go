@@ -125,7 +125,7 @@ func connectToHost() (net.Conn, error) {
 func requestTesting(connection net.Conn, arguments benchInput) error {
 	logrus.Info("Requested to start a Test")
 
-	msg := fmt.Sprintf("startTestReq: Arguments - %s\n", arguments.toString())
+	msg := "startTestReq\n"
 	len, err := connection.Write([]byte(msg))
 
 	// try receive acknowledge package
