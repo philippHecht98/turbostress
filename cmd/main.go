@@ -149,6 +149,13 @@ func waitForFinishingRecording(connection net.Conn) {
 	}
 }
 
+func finishTesting(connection net.Conn) {
+	logrus.Info("Requested to start a Test")
+
+	msg := "startTestReq\n"
+	connection.Write([]byte(msg))
+}
+
 func stress(input benchInput, name string, conn net.Conn, stressFn func(load int, threads int) (*exec.Cmd, error)) error {
 	var load = input.initialLoad
 
@@ -255,6 +262,7 @@ func bench(input benchInput, output io.Writer) error {
 		}
 	}
 
+	finishTesting(conn)
 	return nil
 }
 
