@@ -122,10 +122,10 @@ func connectToHost() (net.Conn, error) {
 	return conn, nil
 }
 
-func requestTesting(connection net.Conn, arguments benchInput, workload int) error {
+func requestTesting(connection net.Conn, arguments benchInput, testcase string) error {
 	logrus.Info("Requested to start a Test")
 
-	msg := fmt.Sprintf("startTestReq %d\n", workload)
+	msg := fmt.Sprintf("startTestReq %s\n", testcase)
 	len, err := connection.Write([]byte(msg))
 
 	// try receive acknowledge package
@@ -163,7 +163,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 	for {
 		logrus.Infof("load_duration_before_measure: %ds, load: %d, threads: %d", int(input.loadDurationBeforeMeasures.Seconds()), load, input.threads)
 		// initialize TCP Connection to Bare-Metal
-		err := requestTesting(conn, input, load)
+		err := requestTesting(conn, input, fmt.Sprintf("%s_%d", input.method, load))
 		if err != nil {
 			return err
 		}
