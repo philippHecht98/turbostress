@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -163,7 +164,11 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 	for {
 		logrus.Infof("load_duration_before_measure: %ds, load: %d, threads: %d", int(input.loadDurationBeforeMeasures.Seconds()), load, input.threads)
 		// initialize TCP Connection to Bare-Metal
-		err := requestTesting(conn, input, fmt.Sprintf("%s_%d", input.method, load))
+		var function_name = strings.Split(runtime.FuncForPC(reflect.ValueOf(stressFn).Pointer()).Name(), ".")[1]
+
+		logrus.Infoln(function_name)
+
+		err := requestTesting(conn, input, fmt.Sprintf("%s_%d", function_name, load))
 		if err != nil {
 			return err
 		}
