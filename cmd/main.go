@@ -284,7 +284,7 @@ func write(data []string, writer io.Writer) error {
 }
 
 func stressNG(args ...string) (*exec.Cmd, error) {
-	cmd := exec.Command("stress-ng", args...)
+	cmd := exec.Command("stress", args...)
 	logrus.Info(cmd.Args)
 	cmd.Stdout = os.Stderr
 	cmd.Stderr = os.Stderr
