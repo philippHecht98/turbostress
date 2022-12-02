@@ -32,7 +32,7 @@ func main() {
 		repeat:                     10,
 		durationBetweenMeasures:    time.Duration(1 * time.Second),
 		method:                     "all",
-		cpuInfo:                    true,
+		cpuInfo:                    false,
 		ipsec:                      true,
 		vm:                         true,
 		maximize:                   true,
