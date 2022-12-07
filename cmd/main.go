@@ -240,7 +240,7 @@ func bench(input benchInput, output io.Writer) error {
 	if err != nil {
 		return err
 	}
-
+	input.initialLoad = 100
 	err = cpuStress(input, conn)
 	if err != nil {
 		return err
