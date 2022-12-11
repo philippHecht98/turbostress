@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -11,7 +10,6 @@ import (
 	"os/exec"
 	"reflect"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
@@ -26,6 +24,7 @@ func main() {
 	// defaults
 	input := benchInput{
 		loadStep:                   25,
+		repititions:                3,
 		loadDurationBeforeMeasures: time.Duration(5 * time.Second),
 		threads:                    runtime.NumCPU(),
 		metrics:                    powerMetrics,
@@ -78,6 +77,7 @@ The two can be separated to build a CSV result file while displaying the progres
 	}
 
 	cmd.PersistentFlags().IntVar(&input.loadStep, "load-step", input.loadStep, "increment the stress load from 0 to 100 with this value")
+	cmd.PersistentFlags().IntVar(&input.repititions, "repititions", input.repititions, "set the number of tests")
 	cmd.PersistentFlags().DurationVar(&input.loadDurationBeforeMeasures, "load-duration-before-measures", input.loadDurationBeforeMeasures, "duration to wait between load start and measures")
 	cmd.PersistentFlags().IntVar(&input.threads, "threads", input.threads, "number of threads to use for the load, defaults to the number of threads on the system")
 	cmd.PersistentFlags().StringSliceVar(&input.metrics, "metrics", input.metrics, "turbostat columns to read")
@@ -97,6 +97,7 @@ The two can be separated to build a CSV result file while displaying the progres
 
 type benchInput struct {
 	loadStep                   int
+	repititions                int
 	threads                    int
 	loadDurationBeforeMeasures time.Duration
 	metrics                    []string
@@ -150,56 +151,64 @@ func waitForFinishingRecording(connection net.Conn) {
 	}
 }
 
-// TODO: change text that is sent
 func finishTesting(connection net.Conn) {
-	logrus.Info("Requested to start a Test")
+	logrus.Info("Requested to finish a Test")
 
 	msg := "finished recording\n"
 	connection.Write([]byte(msg))
 }
 
 func stress(input benchInput, name string, conn net.Conn, stressFn func(load int, threads int) (*exec.Cmd, error)) error {
-	var load = input.initialLoad
+	var repitition = 0
 
 	for {
-		logrus.Infof("load_duration_before_measure: %ds, load: %d, threads: %d", int(input.loadDurationBeforeMeasures.Seconds()), load, input.threads)
-		// initialize TCP Connection to Bare-Metal
-		var function_name = strings.Split(runtime.FuncForPC(reflect.ValueOf(stressFn).Pointer()).Name(), ".")[1]
+		var load = input.initialLoad
+		for {
+			logrus.Infof("load_duration_before_measure: %ds, load: %d, threads: %d", int(input.loadDurationBeforeMeasures.Seconds()), load, input.threads)
+			// initialize TCP Connection to Bare-Metal
+			var function_name = strings.Split(runtime.FuncForPC(reflect.ValueOf(stressFn).Pointer()).Name(), ".")[1]
 
-		logrus.Infoln(function_name)
+			logrus.Infoln(function_name)
 
-		err := requestTesting(conn, input, fmt.Sprintf("%s_%d", function_name, load))
-		if err != nil {
-			return err
+			err := requestTesting(conn, input, fmt.Sprintf("%s_%d_%d", function_name, load, repitition))
+			if err != nil {
+				return err
+			}
+
+			stress, err := stressFn(load, input.threads)
+			if err != nil {
+				return err
+			}
+
+			done := make(chan error)
+			go func() {
+				//defer logrus.Error("stress-ng gone before end of measures, see stress-ng output for details")
+				defer close(done)
+				done <- stress.Wait()
+			}()
+
+			waitForFinishingRecording(conn)
+			stress.Process.Kill()
+			err = <-done
+			if stress.ProcessState.ExitCode() != -1 {
+				return fmt.Errorf("stress-ng was not terminated by a signal, EC: %d, err: %v", stress.ProcessState.ExitCode(), err)
+			}
+
+			// increase load of stress test
+			if load == 100 {
+				logrus.Info("finished testing for this load")
+				break
+			}
+
+			load += input.loadStep
+			if load > 100 {
+				load = 100
+			}
+
 		}
-
-		stress, err := stressFn(load, input.threads)
-		if err != nil {
-			return err
-		}
-
-		done := make(chan error)
-		go func() {
-			//defer logrus.Error("stress-ng gone before end of measures, see stress-ng output for details")
-			defer close(done)
-			done <- stress.Wait()
-		}()
-
-		waitForFinishingRecording(conn)
-		stress.Process.Kill()
-		err = <-done
-		if stress.ProcessState.ExitCode() != -1 {
-			return fmt.Errorf("stress-ng was not terminated by a signal, EC: %d, err: %v", stress.ProcessState.ExitCode(), err)
-		}
-
-		// increase load of stress test
-		if load == 100 {
+		repitition++
+		if repitition >= input.repititions {
 			return nil
-		}
-
-		load += input.loadStep
-		if load > 100 {
-			load = 100
 		}
 	}
 }
@@ -247,13 +256,13 @@ func bench(input benchInput, output io.Writer) error {
 	}
 
 	if input.ipsec {
-		input.initialLoad = 100
 		err = ipsecStress(input, conn)
 		if err != nil {
 			return err
 		}
 	}
 
+	input.initialLoad = 100
 	if input.vm {
 		err = vmStress(input, conn)
 		if err != nil {
@@ -309,40 +318,4 @@ func stressNGVMStress(threads int) (*exec.Cmd, error) {
 
 func stressNGMAximize(threads int) (*exec.Cmd, error) {
 	return stressNG("--cpu", fmt.Sprintf("%d", threads), "--vm", fmt.Sprintf("%d", threads), "--maximize")
-}
-
-func turboStat(stats []string, durationBetweenMeasures time.Duration) ([]float64, error) {
-	cmd := exec.Command("turbostat", "-q", "-c", "package", "--num_iterations", "1", "--interval", fmt.Sprintf("%02f", durationBetweenMeasures.Seconds()), "--show", strings.Join(stats, ","))
-	logrus.Info(cmd.Args)
-	stdout := bytes.NewBuffer(nil)
-	cmd.Stdout = stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Start()
-	if err != nil {
-		return nil, err
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return nil, err
-	}
-	output := stdout.String()
-	lines := strings.Split(output, "\n")
-	results := make(map[string]float64)
-	if len(lines) >= 2 {
-		names := strings.Split(lines[0], "\t")
-		values := strings.Split(lines[1], "\t")
-		for index, value := range values {
-			f, err := strconv.ParseFloat(value, 64)
-			if err != nil {
-				return nil, err
-			}
-			results[names[index]] = f
-		}
-		var ret []float64
-		for _, key := range stats {
-			ret = append(ret, results[key])
-		}
-		return ret, nil
-	}
-	return nil, fmt.Errorf("could not parse turbostat output: %s", output)
 }
