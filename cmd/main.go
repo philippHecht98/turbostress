@@ -117,7 +117,7 @@ func (bi *benchInput) toString() string {
 }
 
 func connectToHost() (net.Conn, error) {
-	conn, err := net.Dial("tcp", "192.168.122.1:4444")
+	conn, err := net.Dial("tcp", "192.168.122.1:4446")
 	if err != nil {
 		return nil, err
 	}
