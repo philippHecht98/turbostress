@@ -170,7 +170,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 
 			logrus.Infoln(function_name)
 
-			err := requestTesting(conn, input, fmt.Sprintf("%s_%d_%d", function_name, load, repitition))
+			err := requestTesting(conn, input, fmt.Sprintf("%s/%d/%d", function_name, load, repitition))
 			if err != nil {
 				return err
 			}
