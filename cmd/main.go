@@ -24,7 +24,7 @@ func main() {
 	// defaults
 	input := benchInput{
 		loadStep:                   25,
-		repititions:                3,
+		repititions:                10,
 		loadDurationBeforeMeasures: time.Duration(5 * time.Second),
 		threads:                    runtime.NumCPU(),
 		metrics:                    powerMetrics,
@@ -161,8 +161,8 @@ func finishTesting(connection net.Conn) {
 func stress(input benchInput, name string, conn net.Conn, stressFn func(load int, threads int) (*exec.Cmd, error)) error {
 	var repitition = 0
 
+	var load = input.initialLoad
 	for {
-		var load = input.initialLoad
 		for {
 			logrus.Infof("load_duration_before_measure: %ds, load: %d, threads: %d", int(input.loadDurationBeforeMeasures.Seconds()), load, input.threads)
 			// initialize TCP Connection to Bare-Metal
@@ -193,24 +193,26 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 			if stress.ProcessState.ExitCode() != -1 {
 				return fmt.Errorf("stress-ng was not terminated by a signal, EC: %d, err: %v", stress.ProcessState.ExitCode(), err)
 			}
-
-			// increase load of stress test
-			if load == 100 {
-				logrus.Info("finished testing for this load")
+			repitition++
+			if repitition >= input.repititions {
 				break
 			}
-
-			load += input.loadStep
-			if load > 100 {
-				load = 100
-			}
-
 		}
-		repitition++
-		if repitition >= input.repititions {
-			return nil
+
+		// increase load of stress test
+		if load == 100 {
+			logrus.Info("finished testing for this load")
+			break
 		}
+
+		load += input.loadStep
+		if load > 100 {
+			load = 100
+		}
+
 	}
+	return nil
+
 }
 
 func cpuStress(input benchInput, conn net.Conn) error {
