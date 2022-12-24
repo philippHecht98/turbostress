@@ -316,7 +316,7 @@ func stressNGIPSec(threads int) (*exec.Cmd, error) {
 }
 
 func stressNGVMStress(threads int) (*exec.Cmd, error) {
-	return stressNG("--vm", fmt.Sprintf("%d", threads), "--vm-bytes", "--4G")
+	return stressNG("--vm", fmt.Sprintf("%d", threads), "--vm-bytes", "4G")
 }
 
 func stressNGMAximize(threads int) (*exec.Cmd, error) {
