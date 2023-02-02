@@ -24,7 +24,7 @@ func main() {
 	// defaults
 	input := benchInput{
 		loadStep:                   25,
-		repititions:                10,
+		repititions:                1,
 		loadDurationBeforeMeasures: time.Duration(5 * time.Second),
 		threads:                    runtime.NumCPU(),
 		metrics:                    powerMetrics,
