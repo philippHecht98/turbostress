@@ -223,8 +223,8 @@ func cpuStress(input benchInput, conn net.Conn) error {
 }
 
 func vmStress(input benchInput, conn net.Conn) error {
-	return stress(input, "VMStress", conn, func(_, threads int) (*exec.Cmd, error) {
-		return stressNGVMStress(threads)
+	return stress(input, "VMStress", conn, func(load int, threads int) (*exec.Cmd, error) {
+		return stressNGVMStress(load, threads)
 	})
 }
 
@@ -237,6 +237,18 @@ func ipsecStress(input benchInput, conn net.Conn) error {
 func maximizeStress(input benchInput, conn net.Conn) error {
 	return stress(input, "maximize", conn, func(_, threads int) (*exec.Cmd, error) {
 		return stressNGMAximize(threads)
+	})
+}
+
+func storageStress(input benchInput, conn net.Conn) error {
+	return stress(input, "storage", conn, func(_, threads int) (*exec.Cmd, error) {
+		return stressNGStorage(threads)
+	})
+}
+
+func webserverStress(input benchInput, conn net.Conn) error {
+	return stress(input, "webserver", conn, func(_, threads int) (*exec.Cmd, error) {
+		return stressNGStorage(threads)
 	})
 }
 
@@ -265,12 +277,23 @@ func bench(input benchInput, output io.Writer) error {
 		}
 	}
 
-	input.initialLoad = 100
+	input.initialLoad = 0
 	if input.vm {
 		err = vmStress(input, conn)
 		if err != nil {
 			return err
 		}
+	}
+
+	err = storageStress(input, conn)
+	if err != nil {
+		return err
+	}
+
+	input.initialLoad = 0
+	err = webserverStress(input, conn)
+	if err != nil {
+		return err
 	}
 
 	if input.maximize {
@@ -315,10 +338,23 @@ func stressNGIPSec(threads int) (*exec.Cmd, error) {
 	return stressNG("--ipsec-mb", fmt.Sprintf("%d", threads))
 }
 
-func stressNGVMStress(threads int) (*exec.Cmd, error) {
-	return stressNG("--vm", fmt.Sprintf("%d", threads), "--vm-bytes", "4G")
+func stressNGVMStress(load, threads int) (*exec.Cmd, error) {
+	return stressNG("--vm", fmt.Sprintf("%d", threads), "--vm-bytes", fmt.Sprintf("%d%%", load))
 }
 
 func stressNGMAximize(threads int) (*exec.Cmd, error) {
 	return stressNG("--cpu", fmt.Sprintf("%d", threads), "--vm", fmt.Sprintf("%d", threads), "--maximize")
+}
+
+func stressNGStorage(threads int) (*exec.Cmd, error) {
+	return stressNG("--hdd", fmt.Sprintf("%d", threads))
+}
+
+func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
+	return stressNG(
+		"--cpu", fmt.Sprintf("%d", threads),
+		"--cpu-load", fmt.Sprintf("%d", load),
+		"--vm", fmt.Sprintf("%d", threads),
+		"--vm-bytes", fmt.Sprintf("%d", load),
+		"--hdd", fmt.Sprintf("%d", threads))
 }
