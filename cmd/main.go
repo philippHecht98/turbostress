@@ -277,17 +277,17 @@ func bench(input benchInput, output io.Writer) error {
 		}
 	}
 
-	input.initialLoad = 0
+	err = storageStress(input, conn)
+	if err != nil {
+		return err
+	}
+
+	input.initialLoad = 10
 	if input.vm {
 		err = vmStress(input, conn)
 		if err != nil {
 			return err
 		}
-	}
-
-	err = storageStress(input, conn)
-	if err != nil {
-		return err
 	}
 
 	input.initialLoad = 0
