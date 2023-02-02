@@ -240,15 +240,15 @@ func maximizeStress(input benchInput, conn net.Conn) error {
 	})
 }
 
-func storageStress(input benchInput, conn net.Conn) error {
+func ioStress(input benchInput, conn net.Conn) error {
 	return stress(input, "storage", conn, func(_, threads int) (*exec.Cmd, error) {
-		return stressNGStorage(threads)
+		return stressNGIO(threads)
 	})
 }
 
 func webserverStress(input benchInput, conn net.Conn) error {
-	return stress(input, "webserver", conn, func(_, threads int) (*exec.Cmd, error) {
-		return stressNGStorage(threads)
+	return stress(input, "webserver", conn, func(load, threads int) (*exec.Cmd, error) {
+		return stressNGWebserver(load, threads)
 	})
 }
 
@@ -277,7 +277,7 @@ func bench(input benchInput, output io.Writer) error {
 		}
 	}
 
-	err = storageStress(input, conn)
+	err = ioStress(input, conn)
 	if err != nil {
 		return err
 	}
@@ -346,8 +346,27 @@ func stressNGMAximize(threads int) (*exec.Cmd, error) {
 	return stressNG("--cpu", fmt.Sprintf("%d", threads), "--vm", fmt.Sprintf("%d", threads), "--maximize")
 }
 
-func stressNGStorage(threads int) (*exec.Cmd, error) {
-	return stressNG("--hdd", fmt.Sprintf("%d", threads))
+func stressNGIO(threads int) (*exec.Cmd, error) {
+	return stressNG(
+		"--class", "network",
+		"--all", fmt.Sprintf("%d", threads))
+
+	/*
+		cmd := exec.Command("../parsec/parsec-3.0/bin/parsecmgmt",
+			"-a", "run", "-p", "netstreamcluster",
+			"-i", "simlarge", "-n", "8",
+		)
+		cmd := exec.Command("")
+		logrus.Info(cmd.Args)
+		cmd.Stdout = os.Stderr
+		cmd.Stderr = os.Stderr
+		err := cmd.Start()
+		if err != nil {
+			return nil, err
+		}
+		return cmd, nil
+	*/
+
 }
 
 func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
@@ -356,5 +375,5 @@ func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
 		"--cpu-load", fmt.Sprintf("%d", load),
 		"--vm", fmt.Sprintf("%d", threads),
 		"--vm-bytes", fmt.Sprintf("%d", load),
-		"--hdd", fmt.Sprintf("%d", threads))
+		"--hdd", fmt.Sprintf("%d", 1))
 }
