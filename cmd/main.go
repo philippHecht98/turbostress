@@ -290,7 +290,7 @@ func bench(input benchInput, output io.Writer) error {
 		}
 	}
 
-	input.initialLoad = 0
+	input.initialLoad = 60
 	err = webserverStress(input, conn)
 	if err != nil {
 		return err
