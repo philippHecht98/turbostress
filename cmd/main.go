@@ -374,6 +374,6 @@ func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
 		"--cpu", fmt.Sprintf("%d", threads/2),
 		"--cpu-load", fmt.Sprintf("%d", load),
 		"--vm", fmt.Sprintf("%d", threads/2),
-		"--vm-bytes", fmt.Sprintf("%d", load),
+		"--vm-bytes", fmt.Sprintf("%d%%", load/(threads/2)),
 		"--hdd", fmt.Sprintf("%d", 1))
 }
