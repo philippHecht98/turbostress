@@ -193,6 +193,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 			waitForFinishingRecording(conn)
 
 			err = stress.Process.Kill()
+			stress.Process.Signal(os.Kill)
 			if err != nil {
 				logrus.Errorf("failed to kill process: %s", err.Error())
 				return err
@@ -258,9 +259,15 @@ func webserverStress(input benchInput, conn net.Conn) error {
 	})
 }
 
-func realTress(input benchInput, conn net.Conn, index int) error {
-	return stress(input, "real", conn, func(load, threads int) (*exec.Cmd, error) {
-		return stressReal(input, index)
+func fluidanimateStress(input benchInput, conn net.Conn) error {
+	return stress(input, "fluidanimate", conn, func(load, threads int) (*exec.Cmd, error) {
+		return stressFluidanimate(input)
+	})
+}
+
+func ferretStress(input benchInput, conn net.Conn) error {
+	return stress(input, "ferret", conn, func(load, threads int) (*exec.Cmd, error) {
+		return stressFerret(threads)
 	})
 }
 
@@ -316,8 +323,14 @@ func bench(input benchInput, output io.Writer) error {
 		}
 	}
 
-	for index := range input.suites {
-		err = realTress(input, conn, index)
+	err = fluidanimateStress(input, conn)
+	if err != nil {
+		return err
+	}
+
+	err = ferretStress(input, conn)
+	if err != nil {
+		return err
 	}
 
 	finishTesting(conn)
@@ -340,8 +353,8 @@ func parsec(args ...string) (*exec.Cmd, error) {
 		args...,
 	)
 	logrus.Info(cmd.Args)
-	cmd.Stdout = os.Stderr
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = nil
+	cmd.Stderr = nil
 	err := cmd.Start()
 	if err != nil {
 		return nil, err
@@ -383,14 +396,6 @@ func stressNGIO(threads int) (*exec.Cmd, error) {
 		"--all", fmt.Sprintf("%d", threads))
 }
 
-func stressReal(input benchInput, index int) (*exec.Cmd, error) {
-	return parsec(
-		"-a", "run", "-p", input.suites[index],
-		"-t", fmt.Sprintf("%d", input.threads),
-		"-r", fmt.Sprintf("%d", input.threads),
-		"-i", "native")
-}
-
 func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
 	return stressNG(
 		"--cpu", fmt.Sprintf("%d", threads/2),
@@ -398,4 +403,18 @@ func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
 		"--vm", fmt.Sprintf("%d", threads/2),
 		"--vm-bytes", fmt.Sprintf("%d%%", load/(threads/2)),
 		"--hdd", fmt.Sprintf("%d", 1))
+}
+
+func stressFluidanimate(input benchInput) (*exec.Cmd, error) {
+	return parsec(
+		"-a", "run", "-p", "fluidanimate",
+		"-n", fmt.Sprintf("%d", input.threads),
+		"-i", "native")
+}
+
+func stressFerret(threads int) (*exec.Cmd, error) {
+	return parsec(
+		"-a", "run", "-p", "ferret",
+		"-n", fmt.Sprintf("%d", threads),
+		"-i", "native")
 }
