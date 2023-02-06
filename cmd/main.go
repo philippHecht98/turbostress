@@ -35,7 +35,7 @@ func main() {
 		ipsec:                      false,
 		vm:                         true,
 		maximize:                   true,
-		suites:                     []string{"test"},
+		suites:                     []string{"fluidanimate", "ferret"},
 	}
 
 	cmd := &cobra.Command{
@@ -331,10 +331,9 @@ func write(data []string, writer io.Writer) error {
 	return err
 }
 
-func parsec(suite string) (*exec.Cmd, error) {
+func parsec(args ...string) (*exec.Cmd, error) {
 	cmd := exec.Command("../parsec/parsec-3.0/bin/parsecmgmt",
-		"-a", "run", "-p", suite,
-		"-i", "native",
+		args...,
 	)
 	logrus.Info(cmd.Args)
 	cmd.Stdout = os.Stderr
@@ -381,7 +380,11 @@ func stressNGIO(threads int) (*exec.Cmd, error) {
 }
 
 func stressReal(input benchInput, index int) (*exec.Cmd, error) {
-	return parsec(input.suites[index])
+	return parsec(	
+		"-a", "run", "-p", input.suites[index],
+		"-t", fmt.Sprintf("%d", input.threads),
+		"-r", fmt.Sprintf("%d", input.threads),
+		"-i", "native",)
 }
 
 func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
