@@ -35,6 +35,7 @@ func main() {
 		ipsec:                      false,
 		vm:                         true,
 		maximize:                   true,
+		suites:                     []string{"test"},
 	}
 
 	cmd := &cobra.Command{
@@ -109,6 +110,7 @@ type benchInput struct {
 	ipsec                      bool
 	vm                         bool
 	maximize                   bool
+	suites                     []string
 }
 
 func (bi *benchInput) toString() string {
@@ -252,6 +254,12 @@ func webserverStress(input benchInput, conn net.Conn) error {
 	})
 }
 
+func realTress(input benchInput, conn net.Conn, index int) error {
+	return stress(input, "real", conn, func(load, threads int) (*exec.Cmd, error) {
+		return stressReal(input, index)
+	})
+}
+
 func bench(input benchInput, output io.Writer) error {
 	//header
 	header := append([]string{"test", "threads", "load"}, input.metrics...)
@@ -296,11 +304,16 @@ func bench(input benchInput, output io.Writer) error {
 		return err
 	}
 
+	input.initialLoad = 100
 	if input.maximize {
 		err = maximizeStress(input, conn)
 		if err != nil {
 			return err
 		}
+	}
+
+	for index := range input.suites {
+		err = realTress(input, conn, index)
 	}
 
 	finishTesting(conn)
@@ -316,6 +329,21 @@ func write(data []string, writer io.Writer) error {
 	line := strings.Join(data, ",")
 	_, err := writer.Write([]byte(line + "\n"))
 	return err
+}
+
+func parsec(suite string) (*exec.Cmd, error) {
+	cmd := exec.Command("../parsec/parsec-3.0/bin/parsecmgmt",
+		"-a", "run", "-p", suite,
+		"-i", "native",
+	)
+	logrus.Info(cmd.Args)
+	cmd.Stdout = os.Stderr
+	cmd.Stderr = os.Stderr
+	err := cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+	return cmd, nil
 }
 
 func stressNG(args ...string) (*exec.Cmd, error) {
@@ -350,23 +378,10 @@ func stressNGIO(threads int) (*exec.Cmd, error) {
 	return stressNG(
 		"--class", "network",
 		"--all", fmt.Sprintf("%d", threads))
+}
 
-	/*
-		cmd := exec.Command("../parsec/parsec-3.0/bin/parsecmgmt",
-			"-a", "run", "-p", "netstreamcluster",
-			"-i", "simlarge", "-n", "8",
-		)
-		cmd := exec.Command("")
-		logrus.Info(cmd.Args)
-		cmd.Stdout = os.Stderr
-		cmd.Stderr = os.Stderr
-		err := cmd.Start()
-		if err != nil {
-			return nil, err
-		}
-		return cmd, nil
-	*/
-
+func stressReal(input benchInput, index int) (*exec.Cmd, error) {
+	return parsec(input.suites[index])
 }
 
 func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
