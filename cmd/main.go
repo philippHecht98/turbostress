@@ -191,7 +191,13 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 			}()
 
 			waitForFinishingRecording(conn)
-			stress.Process.Kill()
+
+			err = stress.Process.Kill()
+			if err != nil {
+
+				logrus.Errorf("failed to kill process: %s", err.Error())
+			}
+
 			err = <-done
 			if stress.ProcessState.ExitCode() != -1 {
 				return fmt.Errorf("stress-ng was not terminated by a signal, EC: %d, err: %v", stress.ProcessState.ExitCode(), err)
@@ -212,10 +218,8 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 		if load > 100 {
 			load = 100
 		}
-
 	}
 	return nil
-
 }
 
 func cpuStress(input benchInput, conn net.Conn) error {
@@ -380,11 +384,11 @@ func stressNGIO(threads int) (*exec.Cmd, error) {
 }
 
 func stressReal(input benchInput, index int) (*exec.Cmd, error) {
-	return parsec(	
+	return parsec(
 		"-a", "run", "-p", input.suites[index],
 		"-t", fmt.Sprintf("%d", input.threads),
 		"-r", fmt.Sprintf("%d", input.threads),
-		"-i", "native",)
+		"-i", "native")
 }
 
 func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
