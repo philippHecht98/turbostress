@@ -193,7 +193,6 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 			waitForFinishingRecording(conn)
 
 			err = stress.Process.Kill()
-			stress.Process.Signal(os.Kill)
 			stress.Process.Wait()
 			if err != nil {
 				logrus.Errorf("failed to kill process: %s", err.Error())
@@ -321,44 +320,46 @@ func bench(input benchInput, output io.Writer) error {
 		return err
 	}
 
-	err = cpuStress(input, conn)
-	if err != nil {
-		return err
-	}
-
-	if input.ipsec {
-		err = ipsecStress(input, conn)
+	/*
+		err = cpuStress(input, conn)
 		if err != nil {
 			return err
 		}
-	}
 
-	err = ioStress(input, conn)
-	if err != nil {
-		return err
-	}
+		if input.ipsec {
+			err = ipsecStress(input, conn)
+			if err != nil {
+				return err
+			}
+		}
 
-	input.initialLoad = 10
-	if input.vm {
-		err = vmStress(input, conn)
+		err = ioStress(input, conn)
 		if err != nil {
 			return err
 		}
-	}
 
-	input.initialLoad = 60
-	err = webserverStress(input, conn)
-	if err != nil {
-		return err
-	}
+		input.initialLoad = 10
+		if input.vm {
+			err = vmStress(input, conn)
+			if err != nil {
+				return err
+			}
+		}
 
-	input.initialLoad = 100
-	if input.maximize {
-		err = maximizeStress(input, conn)
+		input.initialLoad = 60
+		err = webserverStress(input, conn)
 		if err != nil {
 			return err
 		}
-	}
+
+		input.initialLoad = 100
+		if input.maximize {
+			err = maximizeStress(input, conn)
+			if err != nil {
+				return err
+			}
+		}
+	*/
 
 	err = fluidanimateStress(input, conn)
 	if err != nil {
