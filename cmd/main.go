@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"reflect"
 	"runtime"
 	"strings"
 	"time"
@@ -169,7 +168,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 		for {
 			logrus.Infof("load_duration_before_measure: %ds, load: %d, threads: %d", int(input.loadDurationBeforeMeasures.Seconds()), load, input.threads)
 			// initialize TCP Connection to Bare-Metal
-			var function_name = strings.Split(runtime.FuncForPC(reflect.ValueOf(stressFn).Pointer()).Name(), ".")[1]
+			var function_name = name //strings.Split(runtime.FuncForPC(reflect.ValueOf(stressFn).Pointer()).Name(), ".")[1]
 
 			logrus.Infoln(function_name)
 
