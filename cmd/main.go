@@ -248,7 +248,7 @@ func maximizeStress(input benchInput, conn net.Conn) error {
 }
 
 func ioStress(input benchInput, conn net.Conn) error {
-	return stress(input, "storage", conn, func(_, threads int) (*exec.Cmd, error) {
+	return stress(input, "io", conn, func(_, threads int) (*exec.Cmd, error) {
 		return stressNGIO(threads)
 	})
 }
@@ -268,6 +268,42 @@ func fluidanimateStress(input benchInput, conn net.Conn) error {
 func ferretStress(input benchInput, conn net.Conn) error {
 	return stress(input, "ferret", conn, func(load, threads int) (*exec.Cmd, error) {
 		return stressFerret(threads)
+	})
+}
+
+func blackscholesStress(input benchInput, conn net.Conn) error {
+	return stress(input, "blackscholes", conn, func(load, threads int) (*exec.Cmd, error) {
+		return stressBlackschole(threads)
+	})
+}
+
+func streamclusterStress(input benchInput, conn net.Conn) error {
+	return stress(input, "streamcluster", conn, func(load, threads int) (*exec.Cmd, error) {
+		return stressStreamCluster(threads)
+	})
+}
+
+func vipsStress(input benchInput, conn net.Conn) error {
+	return stress(input, "vips", conn, func(load, threads int) (*exec.Cmd, error) {
+		return stressVips(threads)
+	})
+}
+
+func netstreamclusterStress(input benchInput, conn net.Conn) error {
+	return stress(input, "netstreamcluster", conn, func(load, threads int) (*exec.Cmd, error) {
+		return stressNetStreamCluster(threads)
+	})
+}
+
+func netferretStress(input benchInput, conn net.Conn) error {
+	return stress(input, "netferret", conn, func(load, threads int) (*exec.Cmd, error) {
+		return stressNetFerrret(threads)
+	})
+}
+
+func swaptionsStress(input benchInput, conn net.Conn) error {
+	return stress(input, "swaptions", conn, func(load, threads int) (*exec.Cmd, error) {
+		return stressSwaptions(threads)
 	})
 }
 
@@ -333,6 +369,36 @@ func bench(input benchInput, output io.Writer) error {
 		return err
 	}
 
+	err = blackscholesStress(input, conn)
+	if err != nil {
+		return err
+	}
+
+	err = streamclusterStress(input, conn)
+	if err != nil {
+		return err
+	}
+
+	err = vipsStress(input, conn)
+	if err != nil {
+		return err
+	}
+
+	err = swaptionsStress(input, conn)
+	if err != nil {
+		return err
+	}
+
+	err = netferretStress(input, conn)
+	if err != nil {
+		return err
+	}
+
+	err = netstreamclusterStress(input, conn)
+	if err != nil {
+		return err
+	}
+
 	finishTesting(conn)
 	return nil
 }
@@ -391,9 +457,7 @@ func stressNGMAximize(threads int) (*exec.Cmd, error) {
 }
 
 func stressNGIO(threads int) (*exec.Cmd, error) {
-	return stressNG(
-		"--class", "network",
-		"--all", fmt.Sprintf("%d", threads))
+	return stressNG("--iomix", fmt.Sprintf("%d", threads))
 }
 
 func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
@@ -417,4 +481,53 @@ func stressFerret(threads int) (*exec.Cmd, error) {
 		"-a", "run", "-p", "ferret",
 		"-n", fmt.Sprintf("%d", threads),
 		"-i", "native")
+}
+
+func stressBlackschole(threads int) (*exec.Cmd, error) {
+	return parsec(
+		"-a", "run", "-p", "blackscholes",
+		"-i", "native",
+		"-n", fmt.Sprintf("%d", threads),
+	)
+}
+
+func stressStreamCluster(threads int) (*exec.Cmd, error) {
+	return parsec(
+		"-a", "run", "-p", "streamcluster",
+		"-i", "native",
+		"-n", fmt.Sprintf("%d", threads),
+	)
+}
+
+func stressSwaptions(threads int) (*exec.Cmd, error) {
+	return parsec(
+		"-a", "run", "-p", "swaptions",
+		"-i", "native",
+		"-n", fmt.Sprintf("%d", threads),
+	)
+}
+
+func stressVips(threads int) (*exec.Cmd, error) {
+	return parsec(
+		"-a", "run", "-p", "vips",
+		"-i", "native",
+		"-n", fmt.Sprintf("%d", threads),
+	)
+}
+
+func stressNetStreamCluster(threads int) (*exec.Cmd, error) {
+	return parsec(
+		"-a", "run", "-p", "netstreamcluster",
+		"-i", "native",
+		"-n", fmt.Sprintf("%d", threads),
+	)
+}
+
+func stressNetFerrret(threads int) (*exec.Cmd, error) {
+	return parsec(
+		"-a", "run", "-p", "netferret",
+		"-i", "native",
+		"-n", fmt.Sprintf("%d", 4),
+		"-t", fmt.Sprintf("%d", threads),
+	)
 }
