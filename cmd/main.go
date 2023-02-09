@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"net"
 	"os"
 	"os/exec"
@@ -471,7 +472,7 @@ func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
 func stressFluidanimate(input benchInput) (*exec.Cmd, error) {
 	return parsec(
 		"-a", "run", "-p", "fluidanimate",
-		"-n", fmt.Sprintf("%d", input.threads),
+		"-n", fmt.Sprintf("%f", math.Logb(float64(input.threads))),
 		"-i", "native")
 }
 
