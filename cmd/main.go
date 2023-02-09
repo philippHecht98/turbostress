@@ -194,6 +194,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 
 			err = stress.Process.Kill()
 			stress.Process.Signal(os.Kill)
+			stress.Process.Wait()
 			if err != nil {
 				logrus.Errorf("failed to kill process: %s", err.Error())
 				return err
