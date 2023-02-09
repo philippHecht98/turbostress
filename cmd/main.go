@@ -202,9 +202,11 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 			*/
 
 			err = <-done
-			if stress.ProcessState.ExitCode() != -1 {
-				return fmt.Errorf("stress-ng was not terminated by a signal, EC: %d, err: %v", stress.ProcessState.ExitCode(), err)
-			}
+			/*
+				if stress.ProcessState.ExitCode() != -1 {
+					return fmt.Errorf("stress-ng was not terminated by a signal, EC: %d, err: %v", stress.ProcessState.ExitCode(), err)
+				}
+			*/
 			repitition++
 			if repitition >= input.repititions {
 				break
