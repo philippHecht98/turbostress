@@ -434,6 +434,7 @@ func parsec(args ...string) (*exec.Cmd, error) {
 	logrus.Info(cmd.Args)
 	cmd.Stdout = nil
 	cmd.Stderr = nil
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	err := cmd.Start()
 	if err != nil {
 		return nil, err
@@ -446,6 +447,7 @@ func stressNG(args ...string) (*exec.Cmd, error) {
 	logrus.Info(cmd.Args)
 	cmd.Stdout = os.Stderr
 	cmd.Stderr = os.Stderr
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	err := cmd.Start()
 	if err != nil {
 		return nil, err
