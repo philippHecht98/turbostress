@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -192,7 +193,13 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 
 			waitForFinishingRecording(conn)
 
-			err = stress.Process.Kill()
+			pgid, err := syscall.Getpgid(stress.Process.Pid)
+			if err == nil {
+				syscall.Kill(-pgid, 15)
+			}
+
+			//err = stress.Process.Kill()
+
 			//stress.Process.Wait()
 			/*
 				if err != nil {
