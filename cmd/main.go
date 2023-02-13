@@ -166,6 +166,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 
 	var load = input.initialLoad
 	for {
+		repitition = 0
 		for {
 			logrus.Infof("load_duration_before_measure: %ds, load: %d, threads: %d", int(input.loadDurationBeforeMeasures.Seconds()), load, input.threads)
 			// initialize TCP Connection to Bare-Metal
