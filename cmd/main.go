@@ -228,37 +228,37 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 }
 
 func cpuStress(input benchInput, conn net.Conn) error {
-	return stress(input, "CPUStress", conn, func(load int, threads int) (*exec.Cmd, error) {
+	return stress(input, "StressCPU", conn, func(load int, threads int) (*exec.Cmd, error) {
 		return stressNGCPUStress(load, threads, input.method)
 	})
 }
 
 func vmStress(input benchInput, conn net.Conn) error {
-	return stress(input, "VMStress", conn, func(load int, threads int) (*exec.Cmd, error) {
+	return stress(input, "StressVM", conn, func(load int, threads int) (*exec.Cmd, error) {
 		return stressNGVMStress(load, threads)
 	})
 }
 
 func ipsecStress(input benchInput, conn net.Conn) error {
-	return stress(input, "ipsec", conn, func(_, threads int) (*exec.Cmd, error) {
+	return stress(input, "Stressipsec", conn, func(_, threads int) (*exec.Cmd, error) {
 		return stressNGIPSec(threads)
 	})
 }
 
 func maximizeStress(input benchInput, conn net.Conn) error {
-	return stress(input, "maximize", conn, func(_, threads int) (*exec.Cmd, error) {
+	return stress(input, "Stressmaximize", conn, func(_, threads int) (*exec.Cmd, error) {
 		return stressNGMAximize(threads)
 	})
 }
 
 func ioStress(input benchInput, conn net.Conn) error {
-	return stress(input, "io", conn, func(_, threads int) (*exec.Cmd, error) {
+	return stress(input, "Stressio", conn, func(_, threads int) (*exec.Cmd, error) {
 		return stressNGIO(threads)
 	})
 }
 
 func webserverStress(input benchInput, conn net.Conn) error {
-	return stress(input, "webserver", conn, func(load, threads int) (*exec.Cmd, error) {
+	return stress(input, "Stresswebserver", conn, func(load, threads int) (*exec.Cmd, error) {
 		return stressNGWebserver(load, threads)
 	})
 }
