@@ -24,12 +24,12 @@ func main() {
 	logrus.SetOutput(os.Stderr)
 	// defaults
 	input := benchInput{
-		loadStep:                   25,
-		repititions:                1,
+		loadStep:                   20,
+		repititions:                5,
 		loadDurationBeforeMeasures: time.Duration(5 * time.Second),
 		threads:                    runtime.NumCPU(),
 		metrics:                    powerMetrics,
-		repeat:                     10,
+		repeat:                     5,
 		durationBetweenMeasures:    time.Duration(1 * time.Second),
 		method:                     "all",
 		cpuInfo:                    false,
@@ -166,7 +166,6 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 
 	var load = input.initialLoad
 	for {
-		repitition = 0
 		for {
 			logrus.Infof("load_duration_before_measure: %ds, load: %d, threads: %d", int(input.loadDurationBeforeMeasures.Seconds()), load, input.threads)
 			// initialize TCP Connection to Bare-Metal
