@@ -43,7 +43,10 @@ for program in programs:
     for i in range(repitition):
         sock.send('{}/{}/{}\n'.format(program, str(100), str(i)).encode('utf-8'))
         pid = execute_command(get_command(program, threads))
-        pid.wait()
+        try:        
+            pid.wait(20)
+        except subprocess.TimeoutExpired:
+            pid.kill()
         sock.send('fin\n')
         time.sleep(10)
 
