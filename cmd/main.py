@@ -4,10 +4,11 @@ import math
 import socket
 
 def get_command(prog, threads):
-    return ['../parsec/parsec-3.0/bin/parsecmgmt', '-a',  'run', '-p', prog, '-i', 'simlarge', '-n', threads]
+    return ['../parsec/parsec-3.0/bin/parsecmgmt', '-a',  'run', '-p', prog, '-i', 'simlarge', '-n', str(threads)]
     
     
 def execute_command(prog):
+    print(prog)
     pid = subprocess.Popen(
         prog,
         stdout=subprocess.PIPE,
