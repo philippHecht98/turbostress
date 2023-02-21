@@ -32,7 +32,7 @@ programs = ['fluidanimate', 'ferret', 'blackscholes', 'streamcluster', 'swaption
 for program in programs:
     threads = cpu_size
     if program == 'fluidanimate':
-        threads = int(math.log(cpu_size, 2))
+        threads = 2 ** int(math.log(cpu_size, 2))
             
     pid = execute_command(get_command(program, threads))
     pid.wait()
