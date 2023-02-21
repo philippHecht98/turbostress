@@ -44,8 +44,9 @@ for program in programs:
         sock.send('{}/{}/{}\n'.format(program, str(100), str(i)).encode('utf-8'))
         pid = execute_command(get_command(program, threads))
         try:        
-            pid.wait(20)
+            pid.wait(60)
         except subprocess.TimeoutExpired:
+            print('timeout')
             pid.kill()
         sock.send('fin\n'.encode('utf-8'))
         time.sleep(10)
