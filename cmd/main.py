@@ -13,7 +13,7 @@ def execute_command(prog):
     pid = subprocess.Popen(
         prog,
         stdout=subprocess.PIPE,
-        stderr=subprocess.Pipe,
+        stderr=subprocess.PIPE,
         shell=False
     )
     return pid
