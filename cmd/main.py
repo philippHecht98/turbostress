@@ -38,9 +38,11 @@ for program in programs:
     if program == 'fluidanimate':
         threads = int(math.log(cpu_size, 2))
     
-    sock.send('{}/{}/{}\n'.format(program, str(100), str(repitition)).encode('utf-8'))
-    for _ in range(repitition):
+    
+    for i in range(repitition):
+        sock.send('{}/{}/{}\n'.format(program, str(100), str(i)).encode('utf-8'))
         pid = execute_command(get_command(program, threads))
         pid.wait()
+        sock.send('fin\n')
 
 sock.send('finished recording\n')
