@@ -50,4 +50,4 @@ for program in programs:
         sock.send('fin\n'.encode('utf-8'))
         time.sleep(10)
 
-sock.send('finished recording\n')
+sock.send('finished recording\n'.encode('utf-8'))
