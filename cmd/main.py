@@ -16,15 +16,12 @@ def execute_command(prog):
         stderr=subprocess.PIPE,
         shell=False
     )
-    for line in iter(pid.stdout.readline, ""):
-        yield line
-
     return pid
     
 cpu_size = psutil.cpu_count()
 
 
-programs = ['fluidanimate', 'ferret', 'blackscholes', 'streamcluster', 'swaptions', 'vips', 'netferret']
+programs = ['fluidanimate', 'ferret', 'blackscholes', 'streamcluster', 'swaptions', 'vips', 'netstreamcluster', 'netferret']
 
 
 host_address = tuple(['192.168.122.1', 4444])
