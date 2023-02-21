@@ -27,7 +27,7 @@ host_address = tuple(['192.168.122.1', 4444])
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-sock.bind(('0.0.0.0', '4445'))
+sock.bind(('0.0.0.0', 4445))
 sock.connect(host_address)
 
 for program in programs:
