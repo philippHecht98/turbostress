@@ -36,7 +36,7 @@ for program in programs:
     if program == 'fluidanimate':
         threads = int(math.log(cpu_size, 2))
     
-    socket.send('{}\n'.format(program).encode('utf-8'))
+    sock.send('{}\n'.format(program).encode('utf-8'))
     for _ in range(repitition):
         pid = execute_command(get_command(program, threads))
         pid.wait()
