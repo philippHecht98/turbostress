@@ -16,6 +16,9 @@ def execute_command(prog):
         stderr=subprocess.PIPE,
         shell=False
     )
+    for line in iter(pid.stdout.readline, ""):
+        yield line
+
     return pid
     
 cpu_size = psutil.cpu_count()
