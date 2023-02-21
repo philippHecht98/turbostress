@@ -47,7 +47,7 @@ for program in programs:
             pid.wait(20)
         except subprocess.TimeoutExpired:
             pid.kill()
-        sock.send('fin\n')
+        sock.send('fin\n'.encode('utf-8'))
         time.sleep(10)
 
 sock.send('finished recording\n')
