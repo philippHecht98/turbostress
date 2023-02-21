@@ -23,16 +23,22 @@ cpu_size = psutil.cpu_count()
 programs = ['fluidanimate', 'ferret', 'blackscholes', 'streamcluster', 'swaptions', 'vips', 'netstreamcluster', 'netferret']
 
 
-#host_address = tuple('192.168.122.1', 4444)
+host_address = tuple('192.168.122.1', 4444)
 
-#sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-#sock.bind(('0.0.0.0', '4445'))
+sock.bind(('0.0.0.0', '4445'))
+sock.connect(host_address)
 
 for program in programs:
+    
     threads = cpu_size
     if program == 'fluidanimate':
         threads = int(math.log(cpu_size, 2))
-            
-    pid = execute_command(get_command(program, threads))
-    pid.wait()
+    
+    socket.send('{}\n'.format(program).encode('utf-8'))
+    for _ in range(repitition):
+        pid = execute_command(get_command(program, threads))
+        pid.wait()
+
+sock.send('finished recording\n')
