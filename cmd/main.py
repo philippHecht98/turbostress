@@ -23,7 +23,7 @@ cpu_size = psutil.cpu_count()
 programs = ['fluidanimate', 'ferret', 'blackscholes', 'streamcluster', 'swaptions', 'vips', 'netstreamcluster', 'netferret']
 
 
-host_address = tuple('192.168.122.1', 4444)
+host_address = tuple(['192.168.122.1', 4444])
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
