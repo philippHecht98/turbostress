@@ -23,6 +23,11 @@ cpu_size = psutil.cpu_count()
 programs = ['fluidanimate', 'ferret', 'blackscholes', 'streamcluster', 'swaptions', 'vips', 'netstreamcluster', 'netferret']
 
 
+#host_address = tuple('192.168.122.1', 4444)
+
+#sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+#sock.bind(('0.0.0.0', '4445'))
 
 for program in programs:
     threads = cpu_size
@@ -30,3 +35,4 @@ for program in programs:
         threads = int(math.log(cpu_size, 2))
             
     pid = execute_command(get_command(program, threads))
+    pid.wait()
