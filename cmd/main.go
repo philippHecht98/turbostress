@@ -165,6 +165,12 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 	var repitition = 0
 
 	var load = input.initialLoad
+	file, err := os.Create(fmt.Sprintf("%s-%d", name, load))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
 	for {
 		repitition = 0
 		for {
@@ -173,13 +179,6 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 			var function_name = name //strings.Split(runtime.FuncForPC(reflect.ValueOf(stressFn).Pointer()).Name(), ".")[1]
 
 			logrus.Infoln(function_name)
-
-			file, err := os.OpenFile(fmt.Sprintf("%s-%d", name, load), os.O_CREATE|os.O_APPEND, 0777)
-			err = os.Chmod(fmt.Sprintf("%s-%d", name, load), 0777)
-			if err != nil {
-				fmt.Println(err)
-				return err
-			}
 
 			err = requestTesting(conn, input, fmt.Sprintf("%s/%d/%d", function_name, load, repitition))
 			if err != nil {
@@ -213,7 +212,6 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 			if err == nil {
 				syscall.Kill(-pgid, 15)
 			}
-			file.Close()
 
 			//err = stress.Process.Kill()
 
@@ -240,6 +238,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 		// increase load of stress test
 		if load == 100 {
 			logrus.Info("finished testing for this load")
+			file.Close()
 			break
 		}
 
