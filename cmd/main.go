@@ -174,7 +174,14 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 
 			logrus.Infoln(function_name)
 
-			err := requestTesting(conn, input, fmt.Sprintf("%s/%d/%d", function_name, load, repitition))
+			file, err := os.OpenFile(fmt.Sprintf("%s-%d", name, load), os.O_CREATE|os.O_APPEND, 0777)
+			err = os.Chmod(fmt.Sprintf("%s-%d", name, load), 0777)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+
+			err = requestTesting(conn, input, fmt.Sprintf("%s/%d/%d", function_name, load, repitition))
 			if err != nil {
 				return err
 			}
@@ -194,7 +201,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 			finish_mem := 0
 			go func() {
 				for finish_mem == 0 {
-					memory(function_name, load)
+					memory(file)
 					time.Sleep(time.Duration(1 * time.Second))
 				}
 			}()
@@ -206,6 +213,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 			if err == nil {
 				syscall.Kill(-pgid, 15)
 			}
+			file.Close()
 
 			//err = stress.Process.Kill()
 
@@ -464,20 +472,11 @@ func stressNG(args ...string) (*exec.Cmd, error) {
 	return cmd, nil
 }
 
-func memory(name string, load int) (*exec.Cmd, error) {
+func memory(fd *os.File) (*exec.Cmd, error) {
 	cmd := exec.Command("ls")
-	file, err := os.OpenFile(fmt.Sprintf("%s-%d", name, load), os.O_CREATE|os.O_APPEND, 0777)
-	err = os.Chmod(fmt.Sprintf("%s-%d", name, load), 0777)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	cmd.Stdout = file
+	cmd.Stdout = fd
 	cmd.Stderr = os.Stdout
-	if err != nil {
-		return nil, err
-	}
-	err = cmd.Start()
+	err := cmd.Start()
 	if err != nil {
 		return nil, err
 	}
