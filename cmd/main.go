@@ -165,13 +165,14 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 	var repitition = 0
 
 	var load = input.initialLoad
-	file, err := os.Create(fmt.Sprintf("%s-%d", name, load))
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
 
 	for {
+		file, err := os.Create(fmt.Sprintf("%s-%d", name, load))
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
 		repitition = 0
 		for {
 			logrus.Infof("load_duration_before_measure: %ds, load: %d, threads: %d", int(input.loadDurationBeforeMeasures.Seconds()), load, input.threads)
