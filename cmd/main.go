@@ -208,6 +208,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 
 			waitForFinishingRecording(conn)
 			finish_mem = 1
+			
 
 			pgid, err := syscall.Getpgid(stress.Process.Pid)
 			if err == nil {
