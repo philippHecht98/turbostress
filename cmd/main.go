@@ -465,7 +465,7 @@ func stressNG(args ...string) (*exec.Cmd, error) {
 }
 
 func memory(name string, load int) (*exec.Cmd, error) {
-	cmd := exec.Command("free")
+	cmd := exec.Command("ls")
 	file, err := os.OpenFile(fmt.Sprintf("%s-%d", name, load), os.O_CREATE|os.O_APPEND, 0777)
 	err = os.Chmod(fmt.Sprintf("%s-%d", name, load), 0777)
 	if err != nil {
