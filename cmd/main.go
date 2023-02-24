@@ -472,7 +472,7 @@ func stressNG(args ...string) (*exec.Cmd, error) {
 }
 
 func memory(fd *os.File) (*exec.Cmd, error) {
-	cmd := exec.Command("ls")
+	cmd := exec.Command("free")
 	cmd.Stdout = fd
 	cmd.Stderr = os.Stdout
 	err := cmd.Start()
