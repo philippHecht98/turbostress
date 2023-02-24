@@ -468,6 +468,7 @@ func memory(name string, load int) (*exec.Cmd, error) {
 	cmd := exec.Command("free")
 	file, err := os.OpenFile(fmt.Sprintf("%s-%d", name, load), os.O_CREATE|os.O_APPEND, 0660)
 	cmd.Stdout = file
+	cmd.Stderr = os.Stdout
 	if err != nil {
 		return nil, err
 	}
