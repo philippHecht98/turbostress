@@ -191,7 +191,16 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 				done <- stress.Wait()
 			}()
 
+			finish_mem := 0
+			go func() {
+				for finish_mem == 0 {
+					memory(function_name, load)
+					time.Sleep(1)
+				}
+			}()
+
 			waitForFinishingRecording(conn)
+			finish_mem = 1
 
 			pgid, err := syscall.Getpgid(stress.Process.Pid)
 			if err == nil {
@@ -449,6 +458,20 @@ func stressNG(args ...string) (*exec.Cmd, error) {
 	cmd.Stderr = os.Stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	err := cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+	return cmd, nil
+}
+
+func memory(name string, load int) (*exec.Cmd, error) {
+	cmd := exec.Command("free")
+	file, err := os.OpenFile(fmt.Sprintf("%s-%d", name, load), os.O_CREATE|os.O_APPEND, 0660)
+	cmd.Stdout = file
+	if err != nil {
+		return nil, err
+	}
+	err = cmd.Start()
 	if err != nil {
 		return nil, err
 	}
