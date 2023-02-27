@@ -169,7 +169,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 
 	for {
 		f, err := os.OpenFile(fmt.Sprintf("%s-%d", name, load), os.O_APPEND|os.O_CREATE, fs.FileMode(0777))
-		if err != nil {
+		if err == nil {
 			f.WriteString("hallo welt")
 			logrus.Info("wrote to file")
 
