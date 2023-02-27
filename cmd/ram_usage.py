@@ -9,7 +9,8 @@ for filename in os.listdir():
             lines = file.readlines()
             while index < len(lines):
                 line = str(lines[index])
-                data = line.split('\t')
+                print(line)
+                data = line.split(' ')
                 print(data)
                 total = 1
                 free = 3
