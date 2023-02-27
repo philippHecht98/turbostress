@@ -168,7 +168,7 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 	var load = input.initialLoad
 
 	for {
-		file, err := os.OpenFile(fmt.Sprintf("%s-%d", name, load), os.O_APPEND|os.O_CREATE, fs.FileMode(0777))
+		file, err := os.Create(fmt.Sprintf("%s-%d", name, load))
 		if err != nil {
 			fmt.Println(err)
 			return err
