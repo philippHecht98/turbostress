@@ -6,7 +6,7 @@ for filename in os.listdir():
         
         with open(filename) as file:
             index = 1
-            while index < len(file):
+            while index < len(file.readlines()):
                 line = str(file[index])
                 data = line.split()
                 total = 1
