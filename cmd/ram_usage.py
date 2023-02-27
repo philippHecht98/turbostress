@@ -6,7 +6,7 @@ for filename in os.listdir():
         testcase = filename
         
         with open(filename) as file:
-            index = 1
+            index = 4
             lines = file.readlines()
             ratios = []
             while index < len(lines):
@@ -15,6 +15,6 @@ for filename in os.listdir():
                 total = data[1]
                 free = data[3]
                 
-                ratios.append(int(free) / int(total))
+                ratios.append(1 - int(free) / int(total))
                 index += 3
             print("test: {} ratio: {}".format(testcase, sum(ratios) / len(ratios)))
