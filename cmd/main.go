@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"math"
 	"net"
@@ -167,6 +168,12 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 	var load = input.initialLoad
 
 	for {
+		f, err := os.OpenFile(fmt.Sprintf("%s-%d", name, load), os.O_APPEND|os.O_CREATE, fs.FileMode(0777))
+		if err != nil {
+			f.WriteString("hallo welt")
+			logrus.Info("wrote to file")
+
+		}
 		file, err := os.Create(fmt.Sprintf("%s-%d", name, load))
 		if err != nil {
 			fmt.Println(err)
@@ -208,7 +215,6 @@ func stress(input benchInput, name string, conn net.Conn, stressFn func(load int
 
 			waitForFinishingRecording(conn)
 			finish_mem = 1
-			
 
 			pgid, err := syscall.Getpgid(stress.Process.Pid)
 			if err == nil {
