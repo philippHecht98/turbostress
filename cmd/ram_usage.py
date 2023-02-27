@@ -1,4 +1,5 @@
 import os
+import math
 
 for filename in os.listdir():
     if filename.startswith('Stress'):
@@ -7,12 +8,13 @@ for filename in os.listdir():
         with open(filename) as file:
             index = 1
             lines = file.readlines()
+            ratios = []
             while index < len(lines):
                 line = str(lines[index])
                 data = line.split()
-                print(data)
                 total = data[1]
                 free = data[3]
-                print("test: {} free: {} total: {} ratio: {}".format(testcase, free, total, int(free) / int(total)))
-                index += 3
                 
+                ratios.append(int(free) / int(total))
+                index += 3
+            print("test: {} ratio: {}".format(testcase, sum(ratios) / len(ratios)))
