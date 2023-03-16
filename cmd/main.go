@@ -512,6 +512,7 @@ func stressNGWebserver(load, threads int) (*exec.Cmd, error) {
 		"--hdd", fmt.Sprintf("%d", 1))
 }
 
+/*
 func stressFluidanimate(input benchInput) (*exec.Cmd, error) {
 	return parsec(
 		"-a", "run", "-p", "fluidanimate",
