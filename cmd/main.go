@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math"
 	"net"
 	"os"
 	"os/exec"
@@ -287,54 +286,6 @@ func webserverStress(input benchInput, conn net.Conn) error {
 	})
 }
 
-func fluidanimateStress(input benchInput, conn net.Conn) error {
-	return stress(input, "fluidanimate", conn, func(load, threads int) (*exec.Cmd, error) {
-		return stressFluidanimate(input)
-	})
-}
-
-func ferretStress(input benchInput, conn net.Conn) error {
-	return stress(input, "ferret", conn, func(load, threads int) (*exec.Cmd, error) {
-		return stressFerret(threads)
-	})
-}
-
-func blackscholesStress(input benchInput, conn net.Conn) error {
-	return stress(input, "blackscholes", conn, func(load, threads int) (*exec.Cmd, error) {
-		return stressBlackschole(threads)
-	})
-}
-
-func streamclusterStress(input benchInput, conn net.Conn) error {
-	return stress(input, "streamcluster", conn, func(load, threads int) (*exec.Cmd, error) {
-		return stressStreamCluster(threads)
-	})
-}
-
-func vipsStress(input benchInput, conn net.Conn) error {
-	return stress(input, "vips", conn, func(load, threads int) (*exec.Cmd, error) {
-		return stressVips(threads)
-	})
-}
-
-func netstreamclusterStress(input benchInput, conn net.Conn) error {
-	return stress(input, "netstreamcluster", conn, func(load, threads int) (*exec.Cmd, error) {
-		return stressNetStreamCluster(threads)
-	})
-}
-
-func netferretStress(input benchInput, conn net.Conn) error {
-	return stress(input, "netferret", conn, func(load, threads int) (*exec.Cmd, error) {
-		return stressNetFerrret(threads)
-	})
-}
-
-func swaptionsStress(input benchInput, conn net.Conn) error {
-	return stress(input, "swaptions", conn, func(load, threads int) (*exec.Cmd, error) {
-		return stressSwaptions(threads)
-	})
-}
-
 func bench(input benchInput, output io.Writer) error {
 	//header
 	header := append([]string{"test", "threads", "load"}, input.metrics...)
@@ -387,48 +338,6 @@ func bench(input benchInput, output io.Writer) error {
 		}
 	}
 
-	input.initialLoad = 100
-
-	err = fluidanimateStress(input, conn)
-	if err != nil {
-		return err
-	}
-
-	err = ferretStress(input, conn)
-	if err != nil {
-		return err
-	}
-
-	err = blackscholesStress(input, conn)
-	if err != nil {
-		return err
-	}
-
-	err = streamclusterStress(input, conn)
-	if err != nil {
-		return err
-	}
-
-	err = vipsStress(input, conn)
-	if err != nil {
-		return err
-	}
-
-	err = swaptionsStress(input, conn)
-	if err != nil {
-		return err
-	}
-
-	err = netferretStress(input, conn)
-	if err != nil {
-		return err
-	}
-
-	err = netstreamclusterStress(input, conn)
-	if err != nil {
-		return err
-	}
-
 	finishTesting(conn)
 	return nil
 }
@@ -442,21 +351,6 @@ func write(data []string, writer io.Writer) error {
 	line := strings.Join(data, ",")
 	_, err := writer.Write([]byte(line + "\n"))
 	return err
-}
-
-func parsec(args ...string) (*exec.Cmd, error) {
-	cmd := exec.Command("../parsec/parsec-3.0/bin/parsecmgmt",
-		args...,
-	)
-	logrus.Info(cmd.Args)
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	err := cmd.Start()
-	if err != nil {
-		return nil, err
-	}
-	return cmd, nil
 }
 
 func stressNG(args ...string) (*exec.Cmd, error) {
@@ -575,3 +469,4 @@ func stressNetFerrret(threads int) (*exec.Cmd, error) {
 		"-t", fmt.Sprintf("%d", threads),
 	)
 }
+*/
