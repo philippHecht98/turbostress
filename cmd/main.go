@@ -311,6 +311,7 @@ func bench(input benchInput, output io.Writer) error {
 		}
 	}
 
+	input.initialLoad = 100
 	err = ioStress(input, conn)
 	if err != nil {
 		return err
